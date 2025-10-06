@@ -8,7 +8,7 @@
         "test": "jest --testPathPattern=src/ ",
         "test-coverage": "jest --testPathPattern=src/ --collect-coverage",
         "debug": "set APP_NAME=coinmining_service && nodemon --es-module-specifier-resolution=node --watch ./ --inspect ./src/app.js",
-        "dev": "set APP_NAME=coin_mining_service && nodemon --es-module-specifier-resolution=node ./src/app.js",
+        "dev": "set APP_NAME=chicken_road_service && nodemon --es-module-specifier-resolution=node ./src/app.js",
         "prod": "node --es-module-specifier-resolution=node ./src/app.js",
         "reg": "npm set registry http://npm.lumigame.com",
         "stats": "nodemon --es-module-specifier-resolution=node --watch ./tests ./tests/rtp/index.js"

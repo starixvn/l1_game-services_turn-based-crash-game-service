@@ -18,9 +18,37 @@ describe("in game consumer instance", () => {
         },
     };
     const gameData = new CrashGameData(0);
+    const dynamicMultiplierConfigs = [
+        {
+            mode: "easy",
+            values: [
+                1.0, 1.04, 1.09, 1.14, 1.2, 1.26, 1.33, 1.41, 1.5, 1.6, 1.71, 1.85, 2.0, 2.18, 2.4, 2.67, 3.0, 3.43, 4.0, 4.8, 6.0, 8.0,
+                12.0, 24.0,
+            ],
+        },
+        {
+            mode: "medium",
+            values: [
+                1.09, 1.25, 1.43, 1.66, 1.94, 2.28, 2.71, 3.25, 3.94, 4.85, 6.07, 7.72, 10.04, 13.38, 18.4, 26.29, 39.43, 63.09, 110.4,
+                220.8, 552.0, 2208.0,
+            ],
+        },
+        {
+            mode: "hard",
+            values: [
+                1.2, 1.52, 1.94, 2.51, 3.29, 4.39, 5.95, 8.24, 11.68, 16.98, 25.48, 39.63, 64.4, 110.4, 202.4, 404.8, 910.8, 2428.8, 8500.8,
+                51004.8,
+            ],
+        },
+        {
+            mode: "hard core",
+            values: [1.6, 2.74, 4.85, 8.9, 16.98, 33.97, 71.71, 161.35, 391.86, 1044.96, 3134.87, 10972.06, 47545.6, 285273.6, 3138009.6],
+        },
+    ];
+
     gameData.gameConfigs = {
         enableFreeBet: true,
-        crashConfig: { maxMultiplier: 2000, maxWinPerRound: 2000 },
+        crashConfig: { maxMultiplier: 2000, maxWinPerRound: 2000, dynamicMultiplierConfigs },
         odds: {},
     };
 
@@ -113,32 +141,14 @@ describe("in game consumer instance", () => {
 
         it("should return correct result", async () => {
             // arrange
-            const expectedMultiplierConfigs = [
-                {
-                    mode: "easy",
-                    values: [1.0, 1.04, 1.09, 1.14, 1.2, 1.26, 1.33, 1.41, 1.5, 1.6, 1.71, 1.85, 2.0, 2.18, 2.4, 2.67, 3.0, 3.43, 4.0, 4.8, 6.0, 8.0, 12.0, 24.0],
-                },
-                {
-                    mode: "medium",
-                    values: [1.09, 1.25, 1.43, 1.66, 1.94, 2.28, 2.71, 3.25, 3.94, 4.85, 6.07, 7.72, 10.04, 13.38, 18.4, 26.29, 39.43, 63.09, 110.4, 220.8, 552.0, 2208.0],
-                },
-                {
-                    mode: "hard",
-                    values: [1.2, 1.52, 1.94, 2.51, 3.29, 4.39, 5.95, 8.24, 11.68, 16.98, 25.48, 39.63, 64.4, 110.4, 202.4, 404.8, 910.8, 2428.8, 8500.8, 51004.8],
-                },
-                {
-                    mode: "hard core",
-                    values: [1.6, 2.74, 4.85, 8.9, 16.98, 33.97, 71.71, 161.35, 391.86, 1044.96, 3134.87, 10972.06, 47545.6, 285273.6, 3138009.6],
-                },
-            ];
-            
+
             const expectedResult = {
                 gameConfigs: {
                     ...currencyGroupGame,
                     enableFreeBet: gameData.gameConfigs.enableFreeBet,
                     maxWinPerRound: gameData.gameConfigs.crashConfig.maxWinPerRound,
                     odds: gameData.gameConfigs.odds,
-                    multiplierConfigs: expectedMultiplierConfigs,
+                    dynamicMultiplierConfigs,
                 },
                 user: {},
                 players: {},
@@ -154,32 +164,13 @@ describe("in game consumer instance", () => {
     });
 
     describe("consume tests", () => {
-        const expectedMultiplierConfigs = [
-            {
-                mode: "easy",
-                values: [1.0, 1.04, 1.09, 1.14, 1.2, 1.26, 1.33, 1.41, 1.5, 1.6, 1.71, 1.85, 2.0, 2.18, 2.4, 2.67, 3.0, 3.43, 4.0, 4.8, 6.0, 8.0, 12.0, 24.0],
-            },
-            {
-                mode: "medium",
-                values: [1.09, 1.25, 1.43, 1.66, 1.94, 2.28, 2.71, 3.25, 3.94, 4.85, 6.07, 7.72, 10.04, 13.38, 18.4, 26.29, 39.43, 63.09, 110.4, 220.8, 552.0, 2208.0],
-            },
-            {
-                mode: "hard",
-                values: [1.2, 1.52, 1.94, 2.51, 3.29, 4.39, 5.95, 8.24, 11.68, 16.98, 25.48, 39.63, 64.4, 110.4, 202.4, 404.8, 910.8, 2428.8, 8500.8, 51004.8],
-            },
-            {
-                mode: "hard core",
-                values: [1.6, 2.74, 4.85, 8.9, 16.98, 33.97, 71.71, 161.35, 391.86, 1044.96, 3134.87, 10972.06, 47545.6, 285273.6, 3138009.6],
-            },
-        ];
-
         const payload = {
             gameConfigs: {
                 ...currencyGroupGame,
                 enableFreeBet: gameData.gameConfigs.enableFreeBet,
                 maxWinPerRound: gameData.gameConfigs.crashConfig.maxWinPerRound,
                 odds: gameData.gameConfigs.odds,
-                multiplierConfigs: expectedMultiplierConfigs,
+                dynamicMultiplierConfigs,
             },
             user: {},
             players: {},
@@ -216,7 +207,7 @@ describe("in game consumer instance", () => {
                 avatarId: payload.user.avatarId,
                 type: payload.user.type,
             };
-    
+
             // act
             await consumer.consume(realPlayer);
 

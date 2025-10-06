@@ -18,5 +18,21 @@ function generateTapResult(result) {
     return result > 1.0;
 }
 
-export { calculateIncrement, findStage, generateTapResult, getInitialTapMultiplier };
+function calculateDynamicMultiplierConfigs(multiplier, dynamicMultiplierConfigs, mode) {
+    const config = dynamicMultiplierConfigs.find(config => config.mode === mode);
+    if (!config) {
+        return 0;
+    }
+    
+    const values = config.values;
+    const currentIndex = values.findIndex(value => value >= multiplier);
+    
+    if (currentIndex === -1 || currentIndex >= values.length - 1) {
+        return 0;
+    }
+    
+    return values[currentIndex + 1] - multiplier;
+}
+
+export { calculateDynamicMultiplierConfigs, calculateIncrement, findStage, generateTapResult, getInitialTapMultiplier };
 

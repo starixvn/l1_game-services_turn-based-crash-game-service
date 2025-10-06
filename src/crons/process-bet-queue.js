@@ -162,6 +162,7 @@ export default class ProcessBetQueue extends Core.Crons.ProcessBetQueue {
             receivedTime: bet.receivedTime,
             roundId,
             tapCount: bet.tapCount,
+            multiplierMode: bet.multiplierMode,
         };
 
         if (player.session) {
@@ -182,6 +183,16 @@ export default class ProcessBetQueue extends Core.Crons.ProcessBetQueue {
     async insertBet(player, roundId, bet, rate, currentMultiplier) {
         const { crashConfig } = this.gameData.gameConfigs;
 
+        // Use dynamicMultiplierConfigs if turnCrashType is 1, otherwise use multiplierConfigs
+        let odds;
+        switch (crashConfig.turnCrashType) {
+            case TurnCrashType.Dynamic:
+                odds = crashConfig.dynamicMultiplierConfigs;
+                break;
+            default:
+                odds = crashConfig.multiplierConfigs;
+        }
+
         const newBet = {
             uid: player.UID,
             name: player.profile.name,
@@ -192,10 +203,11 @@ export default class ProcessBetQueue extends Core.Crons.ProcessBetQueue {
             autoCashOut: bet.autoCashOut,
             clientSeed: bet.clientSeed,
             totalAmount: bet.amount,
-            odds: crashConfig.multiplierConfigs,
+            odds: odds,
             exchangeRateId: this.gameData.exchangeRates.exId,
             multiplier: currentMultiplier,
             tapCount: 1,
+            multiplierMode: bet.multiplierMode,
             maxWin: this.getMaxWinPerRound(player),
         };
 

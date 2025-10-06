@@ -1,11 +1,11 @@
 import mongoose from "mongoose";
+import { BaseEventPublisher } from "sc-game-base/src/core/event-publishers";
 import { Actions } from "../constants";
+import { RecentBigWinPublisher } from "../event-publishers";
 import helpers from "../helpers/notice-helper";
 import { isBigWin } from "../helpers/result-helper";
 import BigWinConsumer from "./big-win-consumer";
 import { SettleGameRoundConsumer } from "./settle-game-round-consumer";
-import { RecentBigWinPublisher } from "../event-publishers";
-import { BaseEventPublisher } from "sc-game-base/src/core/event-publishers";
 
 export class SettleCashOutConsumer {
     /**
@@ -46,10 +46,10 @@ export class SettleCashOutConsumer {
             return null;
         }
 
-        const { multiplier, roundId, tapCount, amount } = bet;
+        const { multiplier, roundId, tapCount, amount, multiplierMode } = bet;
 
-        await this.insertBetLog(player, roundId, { multiplier, roundId, tapCount, amount, isAutoCashOut });
-        this.updateGameData(player, { multiplier, roundId, tapCount });
+        await this.insertBetLog(player, roundId, { multiplier, roundId, tapCount, amount, isAutoCashOut, multiplierMode });
+        this.updateGameData(player, { multiplier, roundId, tapCount, multiplierMode });
 
         const winningAmount = await this.settleGameRoundConsumer.settleRound({
             roundId,
@@ -77,9 +77,9 @@ export class SettleCashOutConsumer {
     }
 
     isValidCashOutBet(bet) {
-        const { roundId, tapCount, amount } = bet;
+        const { roundId, tapCount, amount, multiplierMode } = bet;
 
-        return roundId && tapCount && amount;
+        return roundId && tapCount && amount && multiplierMode;
     }
 
     getCashOutBet(player) {
@@ -94,6 +94,7 @@ export class SettleCashOutConsumer {
             tapCount: activeBet.tapCount,
             roundId: activeBet.roundId,
             amount: activeBet.amount,
+            multiplierMode: activeBet.multiplierMode,
         };
     }
 
@@ -107,6 +108,7 @@ export class SettleCashOutConsumer {
             multiplier: bet.multiplier,
             roundId: bet.roundId,
             tapCount: bet.tapCount,
+            multiplierMode: bet.multiplierMode,
         };
     }
 
@@ -126,6 +128,7 @@ export class SettleCashOutConsumer {
             winAmount: bet.amount * bet.multiplier,
             tapCount: bet.tapCount,
             isAutoCashOut: bet.isAutoCashOut,
+            multiplierMode: bet.multiplierMode,
         };
 
         if (player.session) {

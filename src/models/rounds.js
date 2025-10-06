@@ -23,6 +23,7 @@ const Schema = new mongoose.Schema({
     settlementResult: { type: Array },
     paid: { type: Boolean, default: false },
     multiplier: { type: Number, required: true },
+    multiplierMode: { type: Number, default: 0 },
 });
 
 export default function (gameConfigName) {

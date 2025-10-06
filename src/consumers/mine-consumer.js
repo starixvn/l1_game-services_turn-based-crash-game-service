@@ -1,6 +1,6 @@
 import { PlaceBetConsumer } from "sc-game-base/src/core/event-consumers";
-import { Actions } from "../constants";
-import { calculateIncrement, generateTapResult } from "../helpers/crash-point-helper";
+import { Actions, TurnCrashType } from "../constants";
+import { calculateDynamicMultiplierConfigs, calculateIncrement, generateTapResult } from "../helpers/crash-point-helper";
 import noticeHelper from "../helpers/notice-helper";
 import { roundFloat } from "../helpers/number-helper";
 import { SettleCashOutConsumer } from "./settle-cash-out-consumer";
@@ -36,7 +36,7 @@ export class MineConsumer extends PlaceBetConsumer {
             const playerGameData = this.gameData.ingame[playerName];
             const activeBet = playerGameData.activeBet;
 
-            await this.handleMine(player, activeBet, payload.clientSendTime);
+            await this.handleMine(player, activeBet, payload);
         } catch (err) {
             this.logService.logError(err);
             this.publishMineFailed(player, noticeHelper.invalidMine);
@@ -66,15 +66,34 @@ export class MineConsumer extends PlaceBetConsumer {
         };
     }
 
-    async handleMine(player, activeBet, clientSendTime) {
+    async handleMine(player, activeBet, payload) {
         const playerName = player.profile.name;
         const ingameData = this.gameData.ingame[playerName];
         const provablyFair = this.gameData.provablyFair[playerName];
         const multiplier = ingameData.activeBet.currentMultiplier;
-        const increment = calculateIncrement(multiplier, this.gameData.gameConfigs.crashConfig.multiplierConfigs);
+        let increment = 0;
         let updatedMultiplier = 0;
+        let maxMultiplier = 0;
 
-        if (multiplier < this.gameData.gameConfigs.crashConfig.maxMultiplier) {
+        const turnCrashType = this.gameData.gameConfigs.crashConfig.turnCrashType ?? TurnCrashType.Increment;
+
+        // Use dynamic calculation if turnCrashType is 1 and multiplierMode is available
+        if (turnCrashType === TurnCrashType.Dynamic) {
+            increment = calculateDynamicMultiplierConfigs(
+                multiplier,
+                this.gameData.gameConfigs.dynamicMultiplierConfigs,
+                activeBet.multiplierMode
+            );
+
+            maxMultiplier = this.gameData.gameConfigs.dynamicMultiplierConfigs.find(
+                (config) => config.mode === activeBet.multiplierMode
+            ).maxMultiplier;
+        } else {
+            increment = calculateIncrement(multiplier, this.gameData.gameConfigs.crashConfig.multiplierConfigs);
+            maxMultiplier = this.gameData.gameConfigs.crashConfig.maxMultiplier;
+        }
+
+        if (multiplier < maxMultiplier) {
             updatedMultiplier = roundFloat(multiplier + increment);
             updatedMultiplier = updatedMultiplier > provablyFair.finalResult ? 0 : updatedMultiplier;
         }
@@ -84,7 +103,7 @@ export class MineConsumer extends PlaceBetConsumer {
         const result = provablyFair.finalResult;
 
         await this.insertMineBetLog(player, activeBet, {
-            clientSendTime,
+            clientSendTime: payload.clientSendTime,
             increment,
             result,
             updatedMultiplier,
@@ -117,6 +136,7 @@ export class MineConsumer extends PlaceBetConsumer {
             result: generateTapResult(result),
             multiplier: updatedMultiplier,
             roundId: activeBet.roundId,
+            multiplierMode: activeBet.multiplierMode,
         };
 
         if (player.session) {
